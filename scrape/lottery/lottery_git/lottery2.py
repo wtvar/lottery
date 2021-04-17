@@ -12,8 +12,7 @@ import csv
 import logging
 from settings import my_telegram_id, TELEGRAM_TOKEN
 
-#import telebot
-#import json
+
 #TODO: tidy the imports and see if all needed
 
 # C:\Users\user\Desktop\python\scrape\lottery\lottery.py file location
@@ -23,6 +22,10 @@ https://github.com/eternnoir/pyTelegramBotAPI#writing-your-first-bot
 """
 
 index_url = "https://www.national-lottery.co.uk/games/euromillions?icid=-:mm:-:mdg:em:dbg:pl:co"
+#set threshold below to be notified when the jackpot exceeds this amount
+threshold = 99
+#also need to add telegram details to settings.py in order for the telegram part to work
+
 
 """ logging details"""
 # set up logging to file
@@ -175,10 +178,10 @@ def check_jackpot():
 		yesterday_jp = list_of_date_amounts[-1][-1] #yesterdays jackpot as int
 		jp_won = jackpot_number_as_int < yesterday_jp #this means jackpot was won
 		"""
-		#if jackpot is over 99 then send a message with link to buy ticket
+		#if jackpot is over threshold then send a message with link to buy ticket
 		#else send message with jackpot but no link
 		
-		if jackpot_number_as_int >= 99:
+		if jackpot_number_as_int >= threshold:
 			#requests.get("https://api.telegram.org/bot940717624:AAF2xw1zPSPUg9KDV4m9cwfO6SPAWrHJekg/sendMessage?chat_id=280057170&text={}".format(ParsedResultText))
 			try:
 				telegram_send(ParsedResultText)
