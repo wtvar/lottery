@@ -182,7 +182,7 @@ def check_jackpot():
 		#else send message with jackpot but no link
 		
 		if jackpot_number_as_int >= threshold:
-			#requests.get("https://api.telegram.org/bot940717624:AAF2xw1zPSPUg9KDV4m9cwfO6SPAWrHJekg/sendMessage?chat_id=280057170&text={}".format(ParsedResultText))
+			
 			try:
 				telegram_send(ParsedResultText)
 				logger2.info("Telegram message sent at " + str(localtime_exact))
@@ -193,7 +193,6 @@ def check_jackpot():
 			
 	
 		else:	
-			#requests.get("https://api.telegram.org/bot940717624:AAF2xw1zPSPUg9KDV4m9cwfO6SPAWrHJekg/sendMessage?chat_id=280057170&text={}".format("jackpot is only " + str(jackpot_number_as_int) + " today! :( " + "\n" + raffle_text))
 			try:
 				telegram_send("jackpot is only " + str(jackpot_number_as_int) + " today! :( " + "\n" + raffle_text)
 				logger2.info("Telegram message sent at " + str(localtime_exact))
