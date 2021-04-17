@@ -165,7 +165,7 @@ def check_jackpot():
 		try:
 			csv_date = datetime.date.today()
 			text_for_csv = [csv_date, str(jackpot_number_as_int)]
-			write_results_to_csv(text_for_csv,"lottery_results.csv")
+			write_results_to_csv(text_for_csv,"/home/pi/python/lottery/lottery_results.csv")
 			
 		except:
 			logger1.info("Error writing data to csv")
