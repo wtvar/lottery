@@ -114,15 +114,13 @@ def check_jackpot():
 	except:
 		#print("error scraping in 1st block")
 		logger1.info('error scraping in 1st block')
-		#requests.get("https://api.telegram.org/bot940717624:AAF2xw1zPSPUg9KDV4m9cwfO6SPAWrHJekg/sendMessage?chat_id=280057170&text={}".format("Error occured in 1st part"))
-	
+		
 	try:
 		t=soup.find('span',{'class':'amount'}).get_text()
 	except:
 		#print("error scraping in 2nd block")
 		logger1.info('error scraping in 2nd block')
 		
-		#requests.get("https://api.telegram.org/bot940717624:AAF2xw1zPSPUg9KDV4m9cwfO6SPAWrHJekg/sendMessage?chat_id=280057170&text={}".format("Error occured in 2nd part"))
 		telegram_send("Error occured in 2nd part")
 		
 		#print("Error occured logging in to telegram at " + str(localtime_exact))
