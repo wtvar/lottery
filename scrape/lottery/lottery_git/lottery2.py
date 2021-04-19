@@ -22,8 +22,11 @@ https://github.com/eternnoir/pyTelegramBotAPI#writing-your-first-bot
 """
 
 index_url = "https://www.national-lottery.co.uk/games/euromillions?icid=-:mm:-:mdg:em:dbg:pl:co"
+lotto_url = "https://www.national-lottery.co.uk/games/lotto?icid=-:mm:-:mdg:lo:dbg:pl:co"
+
 #set threshold below to be notified when the jackpot exceeds this amount
 threshold = 99
+lotto_threshold = 20
 #also need to add telegram details to settings.py in order for the telegram part to work
 
 
@@ -50,8 +53,9 @@ logging.getLogger('').addHandler(console)
 # Now, we can log to the root logger, or any other logger. First the root...
 logging.info('Start of logging.')
 
-logger1 = logging.getLogger('my lottery logger')
+logger1 = logging.getLogger('my euormillions logger')
 logger2 = logging.getLogger('my telegram logger')
+logger3 = logging.getLogger('my lotto  logger')
 
 def write_results_to_csv(text_to_add,csv_name):
 	"""writes text given to a csv fike
@@ -200,7 +204,109 @@ def check_jackpot():
 			except:
 				logger2.info("Telegram message unable to be sent at " + str(localtime_exact))
 				pass
+
+def check_lotto_jackpot():
+	"""Find the current Euromillions jackpot and send telegram message
+	"""
+	
+	response = requests.get(lotto_url)
+	soup = bs4.BeautifulSoup(response.text, 'lxml')
+	localtime_exact = datetime.datetime.today()
+	localtime_date = datetime.date.today()
+	#list_of_date_amounts = []
+	
+	try:
+		t=soup.find('span',{'class':'amount amount_large'}).get_text()
+		#the try checks if scraping works. if it does continue
+	except:
+		#print("error scraping in 1st block")
+		logger3.info('error scraping in 1st block')
+		#requests.get("https://api.telegram.org/bot940717624:AAF2xw1zPSPUg9KDV4m9cwfO6SPAWrHJekg/sendMessage?chat_id=280057170&text={}".format("Error occured in 1st part"))
+	
+	try:
+		t=soup.find('span',{'class':'amount'}).get_text()
+	except:
+		#print("error scraping in 2nd block")
+		logger3.info('error scraping in 2nd block')
+		
+		#requests.get("https://api.telegram.org/bot940717624:AAF2xw1zPSPUg9KDV4m9cwfO6SPAWrHJekg/sendMessage?chat_id=280057170&text={}".format("Error occured in 2nd part"))
+		telegram_send("Error occured in 2nd part")
+		
+		#print("Error occured logging in to telegram at " + str(localtime_exact))
+		#error handling here
+	else:
+		list_of_numbers = re.findall('\d+', t)
+		jackpot_number_as_int = int(list_of_numbers[0])
+
+		#print("The Jackpot on " + str(localtime_date) + " is GBP " + str(jackpot_number_as_int) + " Million\n")
+		#print for logging by csv
+		#print(str(localtime_date) + "," + str(jackpot_number_as_int))
+		logger3.info("data for csv: " + str(localtime_date) + "," + str(jackpot_number_as_int))
+	
+		"""
+		#the next part was for making pretty table to print but doesnt work
+		list_of_date_amounts.append([localtime_date, jackpot_number_as_int]) #add date and result to list
+		df = pd.DataFrame(list_of_date_amounts, columns=["Date","Jackpot"]) #make data frame of the lists
+		
+		latest_jps = df.iloc[::-1].head() #last 5 lines from dataframe of dates and amounts
+		#print(latest_jps)
+		tab_of_df = tabulate(latest_jps,headers=["Date","Jackpot"],tablefmt="grid")
+		"""
+		
+		#is there a draw tonight?
+		day_of_week = datetime.datetime.today().weekday()
+		draw_tonight = False
+		if day_of_week == 2 or day_of_week == 5:
+			draw_tonight = True
 			
+		#text changes depending on draw_tonight
+		if draw_tonight == True:
+			ResultText = "The Lotto Jackpot today is GBP " + str(jackpot_number_as_int) + " Million and there is a draw tonight !!" + "\n" + "\n" + index_url + "\n" + raffle_text
+		else:
+			ResultText = "The Lotto Jackpot today is GBP " + str(jackpot_number_as_int) + " Million" + "\n" + "\n" + index_url
+			
+		ParsedResultText = urllib.parse.quote_plus(ResultText)
+		
+		#write results to csv
+		#TODO: check/correct this as its not writing to file in my pi
+		try:
+			csv_date = datetime.date.today()
+			text_for_csv = [csv_date, str(jackpot_number_as_int)]
+			write_results_to_csv(text_for_csv,"/home/pi/python/lottery/lotto_results.csv")
+			
+		except:
+			logger3.info("Error writing data to csv")
+			pass
+			
+		
+		"""
+		#next part is to check if Jackpot was won
+		#this isnt being used for now
+		yesterday_jp = list_of_date_amounts[-1][-1] #yesterdays jackpot as int
+		jp_won = jackpot_number_as_int < yesterday_jp #this means jackpot was won
+		"""
+		#if jackpot is over threshold then send a message with link to buy ticket
+		#else send message with jackpot but no link
+		
+		if jackpot_number_as_int >= lotto_threshold:
+			#requests.get("https://api.telegram.org/bot940717624:AAF2xw1zPSPUg9KDV4m9cwfO6SPAWrHJekg/sendMessage?chat_id=280057170&text={}".format(ParsedResultText))
+			try:
+				telegram_send(ParsedResultText)
+				logger2.info("Telegram message sent for Lotto at " + str(localtime_exact))
+			except:
+				logger2.info("Telegram message for Lotto unable to be sent at " + str(localtime_exact))
+				pass
+			#print("Telegram message sent at " + str(localtime_exact))
+			
+	
+		else:	
+			#requests.get("https://api.telegram.org/bot940717624:AAF2xw1zPSPUg9KDV4m9cwfO6SPAWrHJekg/sendMessage?chat_id=280057170&text={}".format("jackpot is only " + str(jackpot_number_as_int) + " today! :( " + "\n" + raffle_text))
+			try:
+				telegram_send("jackpot is only " + str(jackpot_number_as_int) + " today! :( ")
+				logger2.info("Telegram message for Lotto sent at " + str(localtime_exact))
+			except:
+				logger2.info("Telegram message for Lotto unable to be sent at " + str(localtime_exact))
+				pass			
 		
 		#TODO:
 		#can then do some playing/analysis after
@@ -210,4 +316,4 @@ def check_jackpot():
 		#average time it takes to go from being won to over 99 again
 		
 		
-check_jackpot()
+check_lotto_jackpot()
